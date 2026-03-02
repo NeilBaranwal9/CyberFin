@@ -7,8 +7,8 @@
 📊 WHAT WE HAVE:
    • 20,000 cyber events
    • 2,402 transactions  
-   • 175 mule rings detected
-   • 283 high-risk accounts
+   • 286 mule rings detected
+   • 2,136 high-risk accounts
    • Full dashboard + API + AI
 
 🚀 TO LAUNCH DASHBOARD:
@@ -22,10 +22,10 @@
    • ACC_000815 (Risk: 88/100)
 
 📖 READ THESE FILES:
-   • QUICK_START.md - Launch instructions
-   • HACKATHON_CHECKLIST.md - Demo prep
+   • README.md - Complete setup guide
+   • DEMO_CHEAT_SHEET.txt - Demo prep
    • PPT_OUTLINE.md - Presentation guide
-   • PROJECT_SUMMARY.md - Complete overview
+   • FINAL_SUMMARY.md - Complete overview
 
 🎤 DEMO FLOW (3 minutes):
    1. Dashboard view → Show metrics
@@ -34,7 +34,7 @@
    4. Show AI explanation + action buttons
 
 💡 NEED HELP?
-   Run: python test_all.py
+   Run: pytest tests/ -v -m "not slow"
 
 ═══════════════════════════════════════════════════════════════
          YOU'RE READY TO WIN! GO CRUSH IT! 🏆

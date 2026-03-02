@@ -1,0 +1,69 @@
+# CyberFin Fusion - Docker Compose Configuration
+version: '3.8'
+
+services:
+  # Streamlit Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyberfin-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - .env
+    volumes:
+      - ./cyber_events.csv:/app/cyber_events.csv
+      - ./transactions.csv:/app/transactions.csv
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cyberfin-network
+
+  # FastAPI Backend (optional)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyberfin-backend
+    command: ["python", "backend.py"]
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - .env
+    volumes:
+      - ./cyber_events.csv:/app/cyber_events.csv
+      - ./transactions.csv:/app/transactions.csv
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - cyberfin-network
+
+networks:
+  cyberfin-network:
+    driver: bridge
+
+# Usage:
+# 1. Build and start: docker-compose up -d
+# 2. View logs: docker-compose logs -f
+# 3. Stop: docker-compose down
+# 4. Rebuild: docker-compose up -d --build
+#
+# Access:
+# - Dashboard: http://localhost:8501
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs

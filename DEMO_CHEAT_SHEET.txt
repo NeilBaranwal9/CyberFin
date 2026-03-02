@@ -111,7 +111,7 @@ Explains:
 🔧 IF SOMETHING BREAKS
 ═══════════════════════════════════════════════════════════════════════
 Restart dashboard: Ctrl+C then run again
-Test everything: python test_all.py
+Test everything: pytest tests/ -v -m "not slow"
 Check backend: python backend.py (separate terminal)
 
 ═══════════════════════════════════════════════════════════════════════

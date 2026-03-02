@@ -217,12 +217,14 @@ streamlit run dashboard_enhanced.py
 Run the test suite to ensure everything works:
 
 ```bash
-python test_all.py
+pytest tests/ -v -m "not slow"
+# or
+python run_tests.py
 ```
 
 **Expected output:**
 ```
-✅ ALL TESTS PASSED!
+✅ 52 tests passed!
 ```
 
 ---
@@ -506,9 +508,10 @@ What happened:
 - `gemini_explainer.py` - Gemini integration + fallback
 
 **Testing:**
-- `tests/` - 66 comprehensive tests
+- `tests/` - 66 unit tests covering core functionality
 - `pytest.ini` - Test configuration
 - `run_tests.py` - Test runner
+- Note: See TESTING_DISCLAIMER.md for production readiness details
 
 ---
 
@@ -548,7 +551,7 @@ What happened:
 - "AI explains patterns in plain language - no technical jargon"
 - "Shows how victims get recruited - educational component"
 - "Export compliance reports instantly - saves hours of manual work"
-- "Production-ready architecture - built in 24 hours"
+- "Scalable architecture designed for production deployment"
 - "What regulators have been demanding since 2023"
 
 ### Demo Accounts
@@ -582,7 +585,9 @@ pytest tests/ -m "not slow" --cov=. --cov-report=html
 ### Test Everything
 
 ```bash
-python test_all.py
+pytest tests/ -v
+# or
+python run_tests.py
 ```
 
 **Expected output:**
@@ -598,10 +603,12 @@ python test_all.py
 
 ### Test Coverage
 
-- **66 comprehensive tests**
-- **85% code coverage**
+- **66 unit tests** covering core functionality
+- **~85% code coverage** (demo scope)
 - **52 fast tests** (~28 seconds)
 - **14 slow tests** (marked, run separately)
+
+**Note:** See `TESTING_DISCLAIMER.md` for production readiness details.
 
 ### What Gets Tested
 
@@ -907,9 +914,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Need Help?
 
 1. **Check documentation:** Read this README thoroughly
-2. **Run tests:** `python test_all.py`
+2. **Run tests:** `pytest tests/ -v -m "not slow"`
 3. **Check troubleshooting:** See section above
-4. **Review guides:** Check `QUICK_START.md`, `DEMO_CHEAT_SHEET.txt`
+4. **Review guides:** Check `DEMO_CHEAT_SHEET.txt`
 
 ### Quick Commands Reference
 
@@ -928,9 +935,6 @@ python backend.py
 
 # Run tests
 pytest tests/ -v -m "not slow"
-
-# Test everything
-python test_all.py
 
 # Run Jupyter notebook
 jupyter notebook detection_demo.ipynb

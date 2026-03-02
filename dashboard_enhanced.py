@@ -11,6 +11,9 @@ import random
 # Page config
 st.set_page_config(page_title="CyberFin Fusion", layout="wide", page_icon="🛡️")
 
+# Demo mode warning
+st.warning("⚠️ **DEMO MODE**: This system uses mock data for demonstration. Graph visualization limited to 500 nodes for performance. Production deployment would use real-time data streams and handle millions of nodes.", icon="⚠️")
+
 # Custom CSS for better styling
 st.markdown("""
 <style>
@@ -34,6 +37,13 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    .demo-warning {
+        background-color: #fff3cd;
+        border: 2px solid #ffc107;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,7 +64,9 @@ def initialize_detector(cyber, txns):
 
 @st.cache_resource
 def initialize_explainer():
-    return GeminiExplainer()
+    explainer = GeminiExplainer()
+    # Show API status in sidebar
+    return explainer
 
 # Fake job ads for victim popup
 FAKE_JOB_ADS = [
@@ -118,6 +130,14 @@ explainer = initialize_explainer()
 
 # Sidebar
 st.sidebar.header("⚙️ Controls")
+
+# API Status indicator
+if explainer.api_available:
+    st.sidebar.success("✅ Gemini AI: Active", icon="🤖")
+else:
+    st.sidebar.warning("⚠️ Gemini AI: Fallback Mode", icon="⚠️")
+    st.sidebar.info("Add GEMINI_API_KEY to .env for AI features. See GEMINI_API_SETUP.md")
+
 risk_threshold = st.sidebar.slider("Risk Score Threshold", 0, 100, 50)
 
 # Timeline filter
@@ -220,6 +240,7 @@ if view_mode == "Dashboard":
 elif view_mode == "Live Graph":
     st.subheader("🕸️ Network Graph Visualization")
     st.info("Showing connections between accounts, devices, IPs, and beneficiaries")
+    st.warning("⚠️ Graph limited to 500 nodes for demo performance. Production systems handle millions of nodes.", icon="⚠️")
     
     # Select a ring to visualize
     rings = detector.detect_mule_rings()
@@ -230,12 +251,20 @@ elif view_mode == "Live Graph":
         
         ring = [r for r in rings if r['ring_id'] == ring_idx][0]
         
-        # Create subgraph for this ring
+        # Create subgraph for this ring (limit to 500 nodes)
         subgraph = nx.Graph()
+        node_count = 0
+        MAX_NODES = 500
+        
         for acc in ring['accounts']:
+            if node_count >= MAX_NODES:
+                st.warning(f"⚠️ Graph limited to {MAX_NODES} nodes. Ring has {len(ring['accounts'])} accounts total.")
+                break
             neighbors = list(detector.graph.neighbors(acc))
-            for neighbor in neighbors:
-                subgraph.add_edge(acc, neighbor)
+            for neighbor in neighbors[:10]:  # Limit neighbors per account
+                if node_count < MAX_NODES:
+                    subgraph.add_edge(acc, neighbor)
+                    node_count = len(subgraph.nodes())
         
         # Create plotly network graph
         pos = nx.spring_layout(subgraph, k=0.5, iterations=50)
@@ -261,7 +290,7 @@ elif view_mode == "Live Graph":
         
         fig = go.Figure(data=[edge_trace, node_trace],
                        layout=go.Layout(
-                           title=f"Ring {ring_idx} Network",
+                           title=f"Ring {ring_idx} Network ({len(subgraph.nodes())} nodes shown)",
                            showlegend=False,
                            hovermode='closest',
                            margin=dict(b=0,l=0,r=0,t=40),
@@ -449,6 +478,41 @@ elif view_mode == "Account Lookup":
             with col3:
                 if st.button("📞 Contact Customer"):
                     st.info("📧 Alert sent to account holder")
+            
+            # Additional AI-powered buttons
+            st.subheader("🤖 AI-Powered Analysis")
+            col4, col5 = st.columns(2)
+            with col4:
+                if st.button("📋 Generate SAR Narrative"):
+                    with st.spinner("Generating professional SAR narrative..."):
+                        sar_narrative = explainer.generate_sar_narrative(
+                            {'account_id': account_id, 'risk_score': risk_score},
+                            cyber_flags,
+                            fin_flags
+                        )
+                        st.markdown(sar_narrative)
+                
+                if st.button("🔍 Investigation Steps"):
+                    with st.spinner("Generating investigation plan..."):
+                        all_flags = cyber_flags + fin_flags
+                        steps = explainer.suggest_investigation_steps(
+                            {'account_id': account_id, 'risk_score': risk_score},
+                            all_flags
+                        )
+                        st.markdown(steps)
+            
+            with col5:
+                if st.button("🛡️ Prevention Tips"):
+                    with st.spinner("Generating prevention guidance..."):
+                        tips = explainer.explain_prevention_tips("money_mule")
+                        st.markdown(tips)
+                
+                if st.button("📖 Victim Education"):
+                    with st.spinner("Generating victim scenario..."):
+                        scenario = explainer.generate_victim_scenario(
+                            {'account_id': account_id, 'risk_score': risk_score}
+                        )
+                        st.info(scenario)
         else:
             st.error("Account not found")
 
