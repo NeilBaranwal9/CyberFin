@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pandas
+networkx
+plotly
+streamlit
+pyvis
+python-louvain
+google-generativeai
+python-dotenv
