@@ -8,3 +8,7 @@ pyvis
 python-louvain
 google-generativeai
 python-dotenv
+pytest
+pytest-cov
+pytest-asyncio
+httpx

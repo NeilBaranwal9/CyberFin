@@ -1,3 +1,0 @@
-@echo off
-echo Starting CyberFin Fusion API...
-python api.py

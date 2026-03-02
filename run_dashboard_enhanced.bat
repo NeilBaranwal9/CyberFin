@@ -1,0 +1,3 @@
+@echo off
+echo Starting CyberFin Fusion Enhanced Dashboard...
+streamlit run dashboard_enhanced.py

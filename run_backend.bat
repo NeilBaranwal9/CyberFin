@@ -1,0 +1,3 @@
+@echo off
+echo Starting CyberFin Fusion Streaming Backend...
+python backend.py
