@@ -196,6 +196,14 @@ def get_stats():
     rings = detector.detect_mule_rings()
     flagged = detector.get_flagged_accounts(threshold=50)
     detection_graph = get_detection_graph()
+    
+    # Check GNN status
+    gnn_enabled = False
+    try:
+        from gnn_risk_scorer import gnn_scorer
+        gnn_enabled = gnn_scorer is not None and gnn_scorer.is_loaded
+    except Exception:
+        pass  # GNN not available
 
     return {
         "timestamp": datetime.now().isoformat(),
@@ -211,6 +219,7 @@ def get_stats():
         },
         "frozen_accounts": repo.frozen_accounts_count(),
         "blocked_transactions": repo.blocked_transactions_count(),
+        "gnn_enabled": gnn_enabled,
     }
 
 

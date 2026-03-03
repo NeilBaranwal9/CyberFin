@@ -13,6 +13,8 @@ pytest-cov
 pytest-asyncio
 httpx
 scipy
+torch
+scikit-learn
 
 neo4j
 supabase

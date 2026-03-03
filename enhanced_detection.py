@@ -18,7 +18,7 @@ class EnhancedDetector:
         
     def calculate_risk(self, account_id):
         """
-        Enhanced risk calculation with multiple factors
+        Enhanced risk calculation with GNN + graph-based factors
         Returns: Risk score 0-100
         """
         if account_id not in self.graph:
@@ -30,32 +30,59 @@ class EnhancedDetector:
             if (datetime.now() - cached_time).seconds < 60:
                 return cached_score
         
-        risk_score = 0
-        neighbors = list(self.graph.neighbors(account_id))
+        # Try GNN-based scoring first
+        gnn_score = -1
+        try:
+            from gnn_risk_scorer import get_gnn_risk
+            gnn_score = get_gnn_risk(account_id)
+        except Exception:
+            pass  # GNN not available
         
-        # Factor 1: Cyber anomaly connections (40 points max)
-        cyber_neighbors = [n for n in neighbors if n.startswith('IP_') or n.startswith('DEV_')]
-        risk_score += min(len(cyber_neighbors) * 5, 40)
-        
-        # Factor 2: Transaction velocity (30 points max)
-        txn_edges = [e for e in self.graph.edges(account_id, data=True) if 'amount' in e[2]]
-        if len(txn_edges) >= 5:
-            risk_score += 30
-        elif len(txn_edges) >= 3:
-            risk_score += 20
-        elif len(txn_edges) >= 1:
-            risk_score += 10
-        
-        # Factor 3: Network centrality (30 points max)
-        degree = self.graph.degree(account_id)
-        risk_score += min(degree * 2, 30)
-        
-        # Factor 4: Shared beneficiaries (bonus)
-        beneficiary_neighbors = [n for n in neighbors if n.startswith('BEN_')]
-        if len(beneficiary_neighbors) >= 2:
-            risk_score += 10
-        
-        final_score = min(risk_score, 100)
+        if gnn_score >= 0:
+            # GNN model available - use as base score
+            risk_score = gnn_score
+            
+            # Add graph-based adjustments
+            neighbors = list(self.graph.neighbors(account_id))
+            
+            # Cyber anomaly connections (bonus)
+            cyber_neighbors = [n for n in neighbors if n.startswith('IP_') or n.startswith('DEV_')]
+            risk_score += min(len(cyber_neighbors) * 2, 15)
+            
+            # Shared beneficiaries (bonus)
+            beneficiary_neighbors = [n for n in neighbors if n.startswith('BEN_')]
+            if len(beneficiary_neighbors) >= 2:
+                risk_score += 5
+            
+            final_score = min(risk_score, 100)
+        else:
+            # Fallback to pure graph-based scoring
+            risk_score = 0
+            neighbors = list(self.graph.neighbors(account_id))
+            
+            # Factor 1: Cyber anomaly connections (40 points max)
+            cyber_neighbors = [n for n in neighbors if n.startswith('IP_') or n.startswith('DEV_')]
+            risk_score += min(len(cyber_neighbors) * 5, 40)
+            
+            # Factor 2: Transaction velocity (30 points max)
+            txn_edges = [e for e in self.graph.edges(account_id, data=True) if 'amount' in e[2]]
+            if len(txn_edges) >= 5:
+                risk_score += 30
+            elif len(txn_edges) >= 3:
+                risk_score += 20
+            elif len(txn_edges) >= 1:
+                risk_score += 10
+            
+            # Factor 3: Network centrality (30 points max)
+            degree = self.graph.degree(account_id)
+            risk_score += min(degree * 2, 30)
+            
+            # Factor 4: Shared beneficiaries (bonus)
+            beneficiary_neighbors = [n for n in neighbors if n.startswith('BEN_')]
+            if len(beneficiary_neighbors) >= 2:
+                risk_score += 10
+            
+            final_score = min(risk_score, 100)
         
         # Cache the result
         self.risk_cache[account_id] = (datetime.now(), final_score)

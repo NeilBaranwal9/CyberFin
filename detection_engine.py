@@ -65,6 +65,19 @@ class CyberFinDetector:
         self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
         self.graph = Neo4jGraphView(self.driver)
         self.risk_scores = {}
+        
+        # Initialize GNN scorer
+        self.gnn_enabled = False
+        try:
+            from gnn_risk_scorer import initialize_gnn_scorer
+            self.gnn_enabled = initialize_gnn_scorer(cyber_df, txn_df)
+            if self.gnn_enabled:
+                print("✅ GNN Risk Scorer initialized successfully")
+            else:
+                print("⚠️ GNN Risk Scorer not available, using rule-based scoring")
+        except Exception as e:
+            print(f"⚠️ GNN initialization failed: {e}")
+            print("⚠️ Using rule-based scoring only")
 
     def _run(self, query, **params):
         with self.driver.session(database=self.database) as session:
@@ -383,21 +396,49 @@ class CyberFinDetector:
         return suspicious_rings
 
     def calculate_risk_score(self, account_id):
-        """Calculate composite risk score (0-100)."""
-        score = 0
+        """
+        Calculate composite risk score (0-100) using GNN + rule-based approach
+        """
+        # Try GNN-based scoring first
+        gnn_score = -1
+        try:
+            from gnn_risk_scorer import get_gnn_risk
+            gnn_score = get_gnn_risk(account_id)
+        except Exception:
+            pass  # GNN not available
 
-        cyber_flags = self.detect_cyber_anomalies(account_id)
-        score += len(cyber_flags) * 10
+        if gnn_score >= 0:
+            # GNN model available - use hybrid approach
+            # GNN provides base score, rules add adjustments
+            score = gnn_score
 
-        fin_flags = self.detect_financial_velocity(account_id)
-        score += len(fin_flags) * 10
+            # Add rule-based adjustments for real-time anomalies
+            cyber_flags = self.detect_cyber_anomalies(account_id)
+            score += len(cyber_flags) * 5  # Smaller weight since GNN already considers patterns
 
-        if account_id in self.graph:
-            degree = self.graph.degree(account_id)
-            score += min(degree * 2, 30)
+            fin_flags = self.detect_financial_velocity(account_id)
+            score += len(fin_flags) * 5
 
-        self.risk_scores[account_id] = min(score, 100)
-        return self.risk_scores[account_id]
+            final_score = min(score, 100)
+        else:
+            # Fallback to pure rule-based scoring
+            score = 0
+
+            cyber_flags = self.detect_cyber_anomalies(account_id)
+            score += len(cyber_flags) * 10
+
+            fin_flags = self.detect_financial_velocity(account_id)
+            score += len(fin_flags) * 10
+
+            if account_id in self.graph:
+                degree = self.graph.degree(account_id)
+                score += min(degree * 2, 30)
+
+            final_score = min(score, 100)
+
+        self.risk_scores[account_id] = final_score
+        return final_score
+
 
     def get_flagged_accounts(self, threshold=50):
         """Get all accounts above risk threshold."""

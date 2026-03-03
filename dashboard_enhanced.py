@@ -1227,10 +1227,21 @@ elif view_mode == "Account Lookup":
         cyber_flags = detector.detect_cyber_anomalies(account_id)
         fin_flags = detector.detect_financial_velocity(account_id)
         
+        # Check if GNN is active
+        gnn_active = False
+        try:
+            from gnn_risk_scorer import get_gnn_risk
+            gnn_score = get_gnn_risk(account_id)
+            gnn_active = gnn_score >= 0
+        except Exception:
+            pass  # GNN not available, continue without it
+        
         col1, col2 = st.columns(2)
         
         with col1:
             st.metric("Risk Score", f"{risk_score}/100")
+            if gnn_active:
+                st.caption("🧠 AI-Enhanced Scoring Active")
             st.markdown(f"Status: {status_badge(account_status)}", unsafe_allow_html=True)
             if risk_score >= 70:
                 st.markdown('<div class="alert-critical">🚨 CRITICAL RISK DETECTED</div>', unsafe_allow_html=True)
